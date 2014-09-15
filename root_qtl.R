@@ -1,6 +1,5 @@
 # root_qtl.R
 
-# pick a threshold for the log scores
 library(ggplot2)
 
 setwd("~/Desktop/Lab/Maloof Lab/QTL_Visualization/")
@@ -15,5 +14,5 @@ ggplot(qtl) +
   theme(legend.position = "none") +
   geom_point(aes(x = pos, y = 0), color = 'blue') +
   ggtitle("LOD Curves for QTLs") +
-  xlab("Genetic Distance") +
+  xlab("Genetic Distance in cM") +
   ylab("LOD")

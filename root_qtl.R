@@ -13,4 +13,7 @@ ggplot(qtl) +
   geom_rect(aes(fill = as.factor(chr)),xmin = -Inf,xmax = Inf, ymin = -Inf,ymax = Inf,alpha = 0.01) +
   geom_hline(yintercept = 0.50, color = "red", size = 1) +
   theme(legend.position = "none") +
-  geom_point(aes(x = pos, y = 0), color = 'blue', shape = 15)
+  geom_point(aes(x = pos, y = 0), color = 'blue') +
+  ggtitle("LOD Curves for QTLs") +
+  xlab("Genetic Distance") +
+  ylab("LOD")

@@ -22,10 +22,7 @@ ggplot(qtl) +
   theme(legend.position = "none",
         axis.text.x = element_text(angle = 90),
         axis.line=element_line(),
-        panel.margin = unit(0, "cm"),
-        panel.background = element_blank(),
-        panel.grid.major.y = element_blank(),
-        panel.grid.minor.y = element_blank()) +
+        panel.margin = unit(0, "cm")) +
   ggtitle("LOD Curves for QTLs") +
   xlab("Genetic Position in cM") +
   ylab("LOD Score")

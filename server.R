@@ -13,7 +13,8 @@ shinyServer(function(input, output) {
   # slider input
   output$slider <- renderUI({
     qtlChr <- subset(qtl, chr = input$chromosome)
-    sliderInput("region", label = h5("Display a region of the chromosome?"), min = 0, max = max(qtlChr$pos), value = c(0, max(qtlChr$pos)))
+    sliderInput("region", label = h5("Display a region of the chromosome?"),
+     min = 0, max = max(qtlChr$pos), value = c(0, max(qtlChr$pos)))
   })
                            
   # plots the graph
@@ -61,14 +62,15 @@ shinyServer(function(input, output) {
     } else {
       p <- p +
         scale_fill_manual(values = c("1" = "white", "0" = "white")) +
-        scale_x_continuous(breaks = seq(0, 1000, by = 25), limits = c(input$region[1], input$region[2]))
+        scale_x_continuous(breaks = seq(0, 1000, by = 25),
+         limits = c(input$region[1], input$region[2]))
     }
 
     # rest of the plot
     p <- p +
       facet_grid(~ chr, scales = "free_x", space = "free_x") +
       geom_rect(aes(fill = background.color), xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf) +
-      geom_line(aes(pos, lod, size = .1)) +
+      geom_line(aes(x = pos, y = lod), size = 2) +
       geom_hline(yintercept = 0.50, color = "red", size = 1) +
       geom_segment(aes(x = pos, xend = pos), y = (peak * -0.02), yend = (peak * -0.05)) +
       scale_y_continuous(expand = c(0, 0), limits = c((peak * -0.06), (peak * 1.02))) +
@@ -77,7 +79,7 @@ shinyServer(function(input, output) {
             axis.line=element_line(),
             panel.margin = unit(0, "cm")) +
       ggtitle("LOD Curves for QTLs") +
-      xlab("Genetic Position in cM") +
+      xlab("Position in cM") +
       ylab("LOD Score") 
 
     # prints the plot

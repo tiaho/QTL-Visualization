@@ -14,7 +14,7 @@ shinyServer(function(input, output) {
   output$slider <- renderUI({
     qtlChr <- subset(qtl, chr == input$chromosome)
     sliderInput("region", label = h5("Display a region of the chromosome?"),
-     min = 0, max = max(qtlChr$pos), value = c(0, max(qtlChr$pos)))
+     min = 1, max = max(qtlChr$pos), value = c(1, max(qtlChr$pos)))
   })
                            
   # plots the graph

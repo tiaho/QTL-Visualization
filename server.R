@@ -12,7 +12,7 @@ shinyServer(function(input, output) {
   
   # slider input
   output$slider <- renderUI({
-    qtlChr <- subset(qtl, chr = input$chromosome)
+    qtlChr <- subset(qtl, chr == input$chromosome)
     sliderInput("region", label = h5("Display a region of the chromosome?"),
      min = 0, max = max(qtlChr$pos), value = c(0, max(qtlChr$pos)))
   })

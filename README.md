@@ -1,1 +1,3 @@
-To run this app in R: `runGitHub("QTL-Visualization", "tiaho")`
+To run this app in R:
+`library(shiny)`
+`runGitHub("QTL-Visualization", "tiaho")`

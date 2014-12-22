@@ -21,12 +21,19 @@ shinyUI(fluidPage(
                                  "Chromosome 4" = 4,
                                  "Chromosome 5" = 5),
                   selected = 0),
-      conditionalPanel(condition = "input.chromosome != 0", uiOutput("slider"))
-
+      br(),
+      selectInput("distance", label = h5("Plot genetic or physical distance?"), 
+                  choices = list("Genetic Distance" = 1,
+                                 "Physical Distance" = 2),
+                  selected = 1),
+      br(),
+      conditionalPanel(condition = "input.chromosome != 0", uiOutput("slider")),
+      br(),
+      conditionalPanel(condition = "input.chromosome !=0", uiOutput("sort_checkbox"))
     ),
     
     mainPanel(
-      plotOutput("graph")
+      uiOutput("plots")
     )
   )
     

@@ -3,5 +3,5 @@ To run this app in R:
 `runGitHub("QTL-Visualization", "tiaho")`
 
 To run this app on the web, go to:
-https://tiaho.shinyapps.io/QTL_Visualization
+https://tiaho.shinyapps.io/QTL_Visualization  
 (App on shinyapp.io is currently out of date)

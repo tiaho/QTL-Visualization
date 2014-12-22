@@ -4,3 +4,4 @@ To run this app in R:
 
 To run this app on the web, go to:
 https://tiaho.shinyapps.io/QTL_Visualization
+(App on shinyapp.io is currently out of date)

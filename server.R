@@ -182,25 +182,32 @@ shinyServer(function(input, output) {
         # plots either the genetic distance or physical distance
         # plots genetic distance
         if (input$distance == 1){
-          if (input$sort == TRUE){
-            data4plotting$genetic.position <- factor(data4plotting$genetic.position, levels = data4plotting[order(data4plotting$expression.values, decreasing = TRUE), "genetic.position"])
+          if (input$sort == TRUE){ # plots sorted expression values, most negative to most positive
+            data4plotting <- subset(data4plotting, genetic.position >= input$region[1] & genetic.position <= input$region[2])
+            expression_plot <- ggplot(data4plotting) + 
+                                  geom_bar(aes(x = reorder(genetic.position, -(expression.values)), y = expression.values), stat="identity")
+          } else{ # plots expression values by genetic distance
+            expression_plot <- ggplot(data4plotting) +
+                                  scale_x_continuous(limits = c(input$region[1], input$region[2])) +
+                                  geom_bar(aes(genetic.position, expression.values), stat="identity")
           }
-          expression_plot <- ggplot(data4plotting) +
-            scale_x_continuous(limits = c(input$region[1], input$region[2])) +
-            geom_histogram(aes(genetic.position, expression.values), stat="identity") +
-            coord_flip() +
-            xlab("Genetic Position") +
-            ylab("Relative Gene Expression")
-          
+          expression_plot <- expression_plot +
+                              coord_flip() +
+                              xlab("Genetic Position") +
+                              ylab("Relative Gene Expression")
         }
         # plots physical distance
         else if(input$distance == 2){
-          if (input$sort == TRUE){
-            data4plotting$physical.position <- factor(data4plotting$physical.position, levels = data4plotting[order(data4plotting$expression.values, decreasing = TRUE), "physical.position"])
+          if (input$sort == TRUE){ # plots sorted expression values, most negative to most positive
+            data4plotting <- subset(data4plotting, physical.position >= input$region[1] & physical.position <= input$region[2])
+            expression_plot <- ggplot(data4plotting) + 
+              geom_bar(aes(x = reorder(physical.position, -(expression.values)), y = expression.values), stat="identity")
+          } else{ # plots expression values by physical distance
+            expression_plot <- ggplot(data4plotting) +
+              scale_x_continuous(limits = c(input$region[1], input$region[2])) +
+              geom_bar(aes(physical.position, expression.values), stat="identity")
           }
-          expression_plot <- ggplot(data4plotting) +
-            scale_x_continuous(limits = c(input$region[1], input$region[2])) +
-            geom_histogram(aes(physical.position, expression.values), stat="identity") +
+          expression_plot <- expression_plot +
             coord_flip() +
             xlab("Physical Position") +
             ylab("Relative Gene Expression")

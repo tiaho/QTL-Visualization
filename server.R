@@ -189,7 +189,7 @@ shinyServer(function(input, output) {
           } else{ # plots expression values by genetic distance
             expression_plot <- ggplot(data4plotting) +
                                   scale_x_continuous(limits = c(input$region[1], input$region[2])) +
-                                  geom_bar(aes(genetic.position, expression.values), stat="identity")
+                                  geom_bar(aes(genetic.position, expression.values), width = 3, stat="identity")
           }
           expression_plot <- expression_plot +
                               coord_flip() +
@@ -198,19 +198,18 @@ shinyServer(function(input, output) {
         }
         # plots physical distance
         else if(input$distance == 2){
+          data4plotting <- subset(data4plotting, genetic.position >= input$region[1] & genetic.position <= input$region[2])
           if (input$sort == TRUE){ # plots sorted expression values, most negative to most positive
-            data4plotting <- subset(data4plotting, physical.position >= input$region[1] & physical.position <= input$region[2])
             expression_plot <- ggplot(data4plotting) + 
-              geom_bar(aes(x = reorder(physical.position, -(expression.values)), y = expression.values), stat="identity")
+                                geom_bar(aes(x = reorder(physical.position, -(expression.values)), y = expression.values), stat="identity")
           } else{ # plots expression values by physical distance
             expression_plot <- ggplot(data4plotting) +
-              scale_x_continuous(limits = c(input$region[1], input$region[2])) +
-              geom_bar(aes(physical.position, expression.values), stat="identity")
+                                geom_bar(aes(physical.position, expression.values), width = 3, stat="identity")
           }
           expression_plot <- expression_plot +
-            coord_flip() +
-            xlab("Physical Position") +
-            ylab("Relative Gene Expression")
+                              coord_flip() +
+                              xlab("Physical Position") +
+                              ylab("Relative Gene Expression")
         }
         
       # plots the plots

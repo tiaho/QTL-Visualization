@@ -13,14 +13,16 @@ gene.name <- vector()
 for (i in 1:50){
   gene.name[i] = paste("gene", i, sep = "")
 }
-expression.values <- rnorm(50, 0 ,1)
-genetic.position <- runif(50, 0, 100)
+expression.values <- rnorm(100, 0 ,1)
+genetic.position <- runif(100, 0, 100)
+genetic.position <- round(genetic.position, 1)
 physical.position <- genetic.position + 10000
+trait <- rep(1:2, 50)
 chrom <- vector()
 for (i in 1:5){
   chrom <- c(chrom, rep(i, 10))
 }
-expression.data <- as.data.frame(cbind(gene.name, expression.values, genetic.position, physical.position, chrom))
+expression.data <- as.data.frame(cbind(gene.name, expression.values, genetic.position, physical.position, trait, chrom))
 
 # converts the values from factor to numeric
 expression.data$expression.values <- as.numeric(as.character(expression.data$expression.values))
@@ -115,8 +117,10 @@ shinyServer(function(input, output) {
             qtlData <- subset(qtl, select = c(chr, pos, trait1_lod, background.color))
           } else if (input$traits == 2){
             qtlData <- subset(qtl, select = c(chr, pos, trait2_lod, background.color))
-          } else {
+          } else if (input$traits == 3){
             qtlData <- subset(qtl, select = c(chr, pos, trait3_lod, background.color))
+          } else {
+            qtlData <- subset(qtl, select = c(chr, pos, trait1_lod, trait2_lod, background.color))
           }
           
           # subsets the data depending on chromosome selected
@@ -136,6 +140,9 @@ shinyServer(function(input, output) {
           
           # changes the column name of traitx_lod to lod
           colnames(qtlData)[3] <- "lod"
+          if (input$traits == 4){
+            colnames(qtlData)[4] <- "lod2"
+          }          
           
           # extracts the max lod value for the data set
           peak <- max(qtlData$lod)
@@ -172,24 +179,44 @@ shinyServer(function(input, output) {
                         xlab("Position in cM") +
                         ylab("LOD Score") 
         
-          
+          if (input$traits == 4){
+            qtl_plot <- qtl_plot +
+                          geom_line(aes(x = pos, y = lod2), size = 2, color = "blue")
+          }
           
         # expression graph
         
         # subsets the data depending on chromosome selected
-        data4plotting <- subset(expression.data, chrom == input$chromosome)
+        if (input$traits == 4){
+          data4plotting <- subset(expression.data, chrom == input$chromosome & (trait == 1 | trait == 2))
+        } else {
+          data4plotting <- subset(expression.data, chrom == input$chromosome & trait == input$traits)
+        }
         
         # plots either the genetic distance or physical distance
         # plots genetic distance
         if (input$distance == 1){
           if (input$sort == TRUE){ # plots sorted expression values, most negative to most positive
             data4plotting <- subset(data4plotting, genetic.position >= input$region[1] & genetic.position <= input$region[2])
-            expression_plot <- ggplot(data4plotting) + 
-                                  geom_bar(aes(x = reorder(genetic.position, -(expression.values)), y = expression.values), stat="identity")
+            if (input$traits == 4){
+              expression_plot <- ggplot(data4plotting) + 
+                                  geom_bar(aes(x = reorder(genetic.position, -(expression.values)), y = expression.values, fill = factor(trait)), stat="identity") + 
+                                  scale_fill_discrete(name = "Trait")
+            } else{
+              expression_plot <- ggplot(data4plotting) + 
+                                   geom_bar(aes(x = reorder(genetic.position, -(expression.values)), y = expression.values), stat="identity")
+            }
           } else{ # plots expression values by genetic distance
             expression_plot <- ggplot(data4plotting) +
-                                  scale_x_continuous(limits = c(input$region[1], input$region[2])) +
-                                  geom_bar(aes(genetic.position, expression.values), width = 3, stat="identity")
+                                  scale_x_continuous(limits = c(input$region[1], input$region[2]))
+            if (input$traits == 4){
+              expression_plot <- expression_plot + 
+                                  geom_bar(aes(genetic.position, expression.values, fill = factor(trait)), width = 3, stat="identity") + 
+                                  scale_fill_discrete(name = "Trait")
+            } else{
+              expression_plot <- expression_plot + 
+                                   geom_bar(aes(genetic.position, expression.values), width = 3, stat="identity")
+            }
           }
           expression_plot <- expression_plot +
                               coord_flip() +
@@ -200,11 +227,24 @@ shinyServer(function(input, output) {
         else if(input$distance == 2){
           data4plotting <- subset(data4plotting, genetic.position >= input$region[1] & genetic.position <= input$region[2])
           if (input$sort == TRUE){ # plots sorted expression values, most negative to most positive
-            expression_plot <- ggplot(data4plotting) + 
-                                geom_bar(aes(x = reorder(physical.position, -(expression.values)), y = expression.values), stat="identity")
+            if (input$traits == 4){
+              expression_plot <- ggplot(data4plotting) + 
+                                  geom_bar(aes(x = reorder(physical.position, -(expression.values)), y = expression.values, fill = factor(trait)), stat="identity") + 
+                                  scale_fill_discrete(name = "Trait")
+            } else{
+              expression_plot <- ggplot(data4plotting) + 
+                                  geom_bar(aes(x = reorder(physical.position, -(expression.values)), y = expression.values), stat="identity")
+            }
           } else{ # plots expression values by physical distance
-            expression_plot <- ggplot(data4plotting) +
-                                geom_bar(aes(physical.position, expression.values), width = 3, stat="identity")
+            if (input$traits == 4){
+              expression_plot <- ggplot(data4plotting) +
+                                  geom_bar(aes(physical.position, expression.values, fill = factor(trait)), width = 3, stat="identity") + 
+                                  scale_fill_discrete(name = "Trait")
+            } else{
+              expression_plot <- ggplot(data4plotting) +
+                                  geom_bar(aes(physical.position, expression.values), width = 3, stat="identity")
+            }
+            
           }
           expression_plot <- expression_plot +
                               coord_flip() +

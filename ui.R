@@ -30,11 +30,17 @@ shinyUI(fluidPage(
       br(),
       conditionalPanel(condition = "input.chromosome != 0", uiOutput("slider")),
       br(),
-      conditionalPanel(condition = "input.chromosome !=0", uiOutput("sort_checkbox"))
+      downloadButton('download_table', 'Download Full Gene Table')
     ),
     
     mainPanel(
-      uiOutput("plots")
+      plotOutput("qtl_graph"),
+      br(),
+      br(),
+      conditionalPanel(condition = "input.chromosome != 0", plotOutput("expression_graph")),
+      br(),
+      br(),
+      tableOutput("table")
     )
   )
     

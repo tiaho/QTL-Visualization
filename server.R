@@ -10,23 +10,23 @@ qtl$background.color[(qtl$chr %% 2) == 0] <- "0"
 
 ### makes the test data set for plotting gene expression
 gene.name <- vector()
-for (i in 1:100){
+for (i in 1:120){
   gene.name[i] = paste("gene", i, sep = "")
 }
-expression.values <- rnorm(100, 0 ,1)
-allele.a <- rnorm(100, 0 ,1)
-allele.b <- rnorm(100, 0 ,1)
-genetic.position <- runif(100, 0, 100)
+expression.values <- rnorm(120, 0 ,1)
+allele.a <- rnorm(120, 0 ,1)
+allele.b <- rnorm(120, 0 ,1)
+genetic.position <- runif(120, 0, 100)
 genetic.position <- round(genetic.position, 1)
 genetic.position.a <- genetic.position - 0.25
 genetic.position.b <- genetic.position + 0.25
 physical.position <- genetic.position + 10000
 physical.position.a <- genetic.position.a + 10000
 physical.position.b <- genetic.position.b + 10000
-trait <- rep(1:2, 50)
+trait <- rep(1:3, 40)
 chrom <- vector()
 for (i in 1:5){
-  chrom <- c(chrom, rep(i, 10))
+  chrom <- c(chrom, rep(i, 24))
 }
 expression.data <- as.data.frame(cbind(gene.name, expression.values, allele.a, allele.b, genetic.position, genetic.position.a, genetic.position.b,
                                        physical.position, physical.position.a, physical.position.b, trait, chrom))

@@ -1,6 +1,7 @@
 # server.R
 
 library(ggplot2)
+library(reshape2)
 library(grid)
 
 qtl <- read.csv("data/traits.csv")
@@ -14,35 +15,31 @@ for (i in 1:120){
   gene.name[i] = paste("gene", i, sep = "")
 }
 expression.values <- rnorm(120, 0 ,1)
-allele.a <- rnorm(120, 0 ,1)
-allele.b <- rnorm(120, 0 ,1)
+A <- rnorm(120, 0 ,1)
+B <- rnorm(120, 0 ,1)
 genetic.position <- runif(120, 0, 100)
 genetic.position <- round(genetic.position, 1)
-genetic.position.a <- genetic.position - 0.25
-genetic.position.b <- genetic.position + 0.25
 physical.position <- genetic.position + 10000
-physical.position.a <- genetic.position.a + 10000
-physical.position.b <- genetic.position.b + 10000
 trait <- rep(1:3, 40)
 chrom <- vector()
 for (i in 1:5){
   chrom <- c(chrom, rep(i, 24))
 }
-expression.data <- as.data.frame(cbind(gene.name, expression.values, allele.a, allele.b, genetic.position, genetic.position.a, genetic.position.b,
-                                       physical.position, physical.position.a, physical.position.b, trait, chrom))
+expression.data <- as.data.frame(cbind(gene.name, expression.values, A, B, genetic.position, physical.position, trait, chrom))
 
 # converts the values from factor to numeric
 expression.data$expression.values <- as.numeric(as.character(expression.data$expression.values))
-expression.data$allele.a <- as.numeric(as.character(expression.data$allele.a))
-expression.data$allele.b <- as.numeric(as.character(expression.data$allele.b))
+expression.data$A <- as.numeric(as.character(expression.data$A))
+expression.data$B <- as.numeric(as.character(expression.data$B))
 expression.data$genetic.position <- as.numeric(as.character(expression.data$genetic.position))
-expression.data$genetic.position.a <- as.numeric(as.character(expression.data$genetic.position.a))
-expression.data$genetic.position.b <- as.numeric(as.character(expression.data$genetic.position.b))
 expression.data$physical.position <- as.numeric(as.character(expression.data$physical.position))
-expression.data$physical.position.a <- as.numeric(as.character(expression.data$physical.position.a))
-expression.data$physical.position.b <- as.numeric(as.character(expression.data$physical.position.b))
 expression.data$chrom <- as.numeric(as.character(expression.data$chrom))
 
+# changes data frame from wide format to long format
+expression.data <- melt(expression.data, id.vars = c("gene.name", "trait", "chrom", "genetic.position", "physical.position"),
+                              measure.vars = c("A", "B"),
+                              variable.name = "allele",
+                              value.name = "expression.value")
 
 shinyServer(function(input, output) {
   
@@ -121,11 +118,10 @@ shinyServer(function(input, output) {
             panel.margin = unit(0, "cm")) +
       ggtitle("LOD Curves for QTLs") +
       xlab("Position in cM") +
-      ylab("LOD Score") 
+      ylab("LOD Score") +
+      theme(axis.text = element_text(size=12), axis.title = element_text(size=16), title = element_text(size=16))
     
     if (input$traits == 4){
-      #             qtl_plot <- qtl_plot +
-      #                           geom_line(aes(x = pos, y = lod2), size = 2, color = "blue")
       qtl_plot +
         geom_line(aes(x = pos, y = lod2), size = 2, color = "blue")
     } else {
@@ -149,32 +145,34 @@ shinyServer(function(input, output) {
                           scale_x_continuous(limits = c(input$region[1], input$region[2]))
       if (input$traits == 4){
         expression_plot <- expression_plot + 
-                            geom_point(aes(genetic.position, expression.values, color = factor(trait)), width = 3, stat="identity") + 
-                            scale_color_discrete(name = "Trait")
-      } else{
+                            geom_point(aes(genetic.position, expression.value, color = factor(allele), shape = factor(trait)), size = 3, stat="identity", position = "jitter") +
+                            scale_shape_discrete(name = "Trait")
+        } else{
         expression_plot <- expression_plot + 
-                            geom_point(aes(genetic.position.a, allele.a), color = "blue", width = 3, stat="identity") +
-                            geom_point(aes(genetic.position.b, allele.b), color = "red", width = 3, stat="identity") 
+                            geom_point(aes(genetic.position, expression.value, color = factor(allele)), size = 3, stat="identity", position = "jitter")
       }
       expression_plot +
         xlab("Genetic Position in cM") +
-        ylab("Relative Gene Expression")
+        ylab("Relative Gene Expression") +
+        scale_color_discrete(name = "Allele") +
+        theme(axis.text = element_text(size=12), axis.title = element_text(size=16), title = element_text(size=16))
     }
     # plots physical distance
     else if(input$distance == 2){
       data4plotting <- subset(data4plotting, genetic.position >= input$region[1] & genetic.position <= input$region[2])
       if (input$traits == 4){
         expression_plot <- ggplot(data4plotting) +
-                            geom_point(aes(physical.position, expression.values, color = factor(trait)), width = 3, stat="identity") + 
-                            scale_color_discrete(name = "Trait")
+                            geom_point(aes(physical.position, expression.value, color = factor(allele), shape = factor(trait)), size = 3, stat="identity", position = "jitter") +
+                            scale_shape_discrete(name = "Trait")
       } else{
         expression_plot <- ggplot(data4plotting) +
-                            geom_point(aes(physical.position.a, allele.a), color = "blue", width = 3, stat="identity") +
-                            geom_point(aes(physical.position.b, allele.b), color = "red", width = 3, stat="identity") 
+                            geom_point(aes(physical.position, expression.value, color = factor(allele)), size = 3, stat="identity", position = "jitter")
         }
       expression_plot +
         xlab("Physical Position in Base Pairs") +
-        ylab("Relative Gene Expression")
+        ylab("Relative Gene Expression") +
+        scale_color_discrete(name = "Allele") +
+        theme(axis.text = element_text(size=12), axis.title = element_text(size=16), title = element_text(size=16))
     }
   })
   
@@ -208,7 +206,7 @@ shinyServer(function(input, output) {
   # or just gene name, position, and expression?
   # only shows top 10 upregulated and top 10 downregulated genes
   table_data <- reactive({
-    selected.data <- subset(expression.data, select = c(gene.name, allele.a, allele.b, genetic.position, physical.position, trait, chrom))
+    selected.data <- subset(expression.data, select = c(gene.name, allele, expression.value, genetic.position, physical.position, trait, chrom))
     if (input$chromosome == 0){
       if (input$traits == 4){
         data <- subset(selected.data, trait == 1 | trait == 2)
@@ -223,7 +221,9 @@ shinyServer(function(input, output) {
         data <- subset(data_in_region, chrom == input$chromosome & trait == input$traits)
       }
     }
-    sorted_data <- data[order(data$allele.a),]
+    sorted_data <- data[order(data$expression.value),]
+    sorted_data$physical.position = as.character(round(sorted_data$physical.position, digits = 0))
+    sorted_data$chrom = as.character(sorted_data$chrom)
     top10downregulated <- head(sorted_data, n=10)
     top10upregulated <- tail(sorted_data, n=10)
     final_table <- rbind(top10downregulated, top10upregulated)
@@ -233,7 +233,6 @@ shinyServer(function(input, output) {
   # shows the data previously retreived in a table
   output$table <- renderTable({
     table_data()
-    },include.rownames = FALSE)
-  
-
+    }, include.rownames = FALSE)
+    
 })

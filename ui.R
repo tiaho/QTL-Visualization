@@ -8,8 +8,8 @@ shinyUI(fluidPage(
   sidebarLayout(
     sidebarPanel(
       selectInput("traits", label = h5("Plot which trait?"), 
-                  choices = list("Trait 1" = 1,
-                                 "Trait 2" = 2,
+                  choices = list("Trait 1" = "trait1",
+                                 "Trait 2" = "trait2",
                                  "Trait 3" = 3,
                                  "Traits 1 and 2" = 4),
                   selected = 1),

@@ -4,49 +4,50 @@ library(ggplot2)
 library(reshape2)
 library(grid)
 
-qtl <- read.csv("data/traits.csv")
+# qtl <- read.csv("data/traits.csv")
+qtl <- read.csv("data/allele_specific_test_p_adjusted.csv")
 
 qtl$background.color <- "1"
 qtl$background.color[(qtl$chr %% 2) == 0] <- "0"
 
+num_genes = length(qtl$gene_name)
+
 ### makes the test data set for plotting gene expression
-gene.name <- vector()
-for (i in 1:120){
-  gene.name[i] = paste("gene", i, sep = "")
-}
-expression.values <- rnorm(120, 0 ,1)
-A <- rnorm(120, 0 ,1)
-B <- rnorm(120, 0 ,1)
-genetic.position <- runif(120, 0, 100)
-genetic.position <- round(genetic.position, 1)
-physical.position <- genetic.position + 10000
-trait <- rep(1:3, 40)
-chrom <- vector()
-for (i in 1:5){
-  chrom <- c(chrom, rep(i, 24))
-}
-expression.data <- as.data.frame(cbind(gene.name, expression.values, A, B, genetic.position, physical.position, trait, chrom))
+qtl$genetic.position <- runif(num_genes, 0, 100)
+qtl$genetic.position <- round(qtl$genetic.position, 1)
+qtl$physical.position <- qtl$genetic.position + 10000
+qtl$chr <- ceiling(runif(num_genes, 0, 5))
+qtl$trait1 <- qtl[,2]
+qtl$trait2 <- qtl[,3]
+# qtl$expression.values <- rnorm(num_genes, 0 ,1)
+qtl$A <- rnorm(num_genes, 0 ,1)
+qtl$B <- rnorm(num_genes, 0 ,1)
 
 # converts the values from factor to numeric
-expression.data$expression.values <- as.numeric(as.character(expression.data$expression.values))
-expression.data$A <- as.numeric(as.character(expression.data$A))
-expression.data$B <- as.numeric(as.character(expression.data$B))
-expression.data$genetic.position <- as.numeric(as.character(expression.data$genetic.position))
-expression.data$physical.position <- as.numeric(as.character(expression.data$physical.position))
-expression.data$chrom <- as.numeric(as.character(expression.data$chrom))
+# expression.data$expression.values <- as.numeric(as.character(expression.data$expression.values))
+# expression.data$A <- as.numeric(as.character(expression.data$A))
+# expression.data$B <- as.numeric(as.character(expression.data$B))
+# expression.data$genetic.position <- as.numeric(as.character(expression.data$genetic.position))
+# expression.data$physical.position <- as.numeric(as.character(expression.data$physical.position))
+# expression.data$chrom <- as.numeric(as.character(expression.data$chrom))
 
 # changes data frame from wide format to long format
-expression.data <- melt(expression.data, id.vars = c("gene.name", "trait", "chrom", "genetic.position", "physical.position"),
+qtl <- melt(qtl, id.vars = c("gene_name", "trait1", "trait2", "chr", "genetic.position", "physical.position", "background.color"),
                               measure.vars = c("A", "B"),
                               variable.name = "allele",
                               value.name = "expression.value")
+
+qtl <- melt(qtl, id.vars = c("gene_name", "chr", "genetic.position", "physical.position", "allele", "expression.value", "background.color"),
+            measure.vars = c("trait1", "trait2"),
+            variable.name = "trait",
+            value.name = "lod")
 
 shinyServer(function(input, output) {
   
   # slider input
   output$slider <- renderUI({
     qtlChr <- subset(qtl, chr == input$chromosome)
-    max_pos <- ceiling(max(qtlChr$pos, 1))
+    max_pos <- ceiling(max(qtlChr$genetic.position, 1))
     sliderInput("region", label = h5("Display a region of the chromosome?"),
      min = 0, max = max_pos, value = c(0, max_pos), step = 1)
   })
@@ -55,13 +56,13 @@ shinyServer(function(input, output) {
   output$qtl_graph <- renderPlot({
     # subsets the data depending on the trait selected
     if (input$traits == 1){
-      qtlData <- subset(qtl, select = c(chr, pos, trait1_lod, background.color))
+      qtlData <- subset(qtl, trait == "trait1", select = c(chr, genetic.position, lod, background.color))
     } else if (input$traits == 2){
-      qtlData <- subset(qtl, select = c(chr, pos, trait2_lod, background.color))
-    } else if (input$traits == 3){
-      qtlData <- subset(qtl, select = c(chr, pos, trait3_lod, background.color))
+      qtlData <- subset(qtl, trait == "trait2", select = c(chr, genetic.position, lod, background.color))
+#     } else if (input$traits == 3){
+#       qtlData <- subset(qtl, select = c(chr, genetic.position, trait3_lod, background.color))
     } else {
-      qtlData <- subset(qtl, select = c(chr, pos, trait1_lod, trait2_lod, background.color))
+      qtlData <- subset(qtl, select = c(chr, genetic.position, lod, background.color))
     }
     
     # subsets the data depending on chromosome selected
@@ -79,12 +80,12 @@ shinyServer(function(input, output) {
       qtlData <- subset(qtlData, chr == 5)
     }
     
-    # changes the column name of traitx_lod to lod
-    colnames(qtlData)[3] <- "lod"
-    if (input$traits == 4){
-      colnames(qtlData)[4] <- "lod2"
-    }          
-    
+#     # changes the column name of traitx_lod to lod
+#     colnames(qtlData)[3] <- "lod"
+#     if (input$traits == 4){
+#       colnames(qtlData)[4] <- "lod2"
+#     }          
+#     
     # extracts the max lod value for the data set
     peak <- max(qtlData$lod)
     
@@ -108,9 +109,9 @@ shinyServer(function(input, output) {
     qtl_plot <- qtl_plot +
       facet_grid(~ chr, scales = "free_x", space = "free_x") +
       geom_rect(aes(fill = background.color), xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf) +
-      geom_line(aes(x = pos, y = lod), size = 2) +
+      geom_line(aes(x = genetic.position, y = lod), size = 2) +
       geom_hline(yintercept = 0.50, color = "red", size = 1) +
-      geom_segment(aes(x = pos, xend = pos), y = (peak * -0.02), yend = (peak * -0.05)) +
+      geom_segment(aes(x = genetic.position, xend = genetic.position), y = (peak * -0.02), yend = (peak * -0.05)) +
       scale_y_continuous(expand = c(0, 0), limits = c((peak * -0.06), (peak * 1.02))) +
       theme(legend.position = "none",
             axis.text.x = element_text(angle = 90),
@@ -123,7 +124,7 @@ shinyServer(function(input, output) {
     
     if (input$traits == 4){
       qtl_plot +
-        geom_line(aes(x = pos, y = lod2), size = 2, color = "blue")
+        geom_line(aes(x = genetic.position, y = lod2), size = 2, color = "blue")
     } else {
       qtl_plot
     }
@@ -133,9 +134,9 @@ shinyServer(function(input, output) {
   output$expression_graph <- renderPlot({
     # subsets the data depending on chromosome selected
     if (input$traits == 4){
-      data4plotting <- subset(expression.data, chrom == input$chromosome & (trait == 1 | trait == 2))
+      data4plotting <- subset(qtl, chr == input$chromosome & (trait == "trait1" | trait == "trait2"))
     } else {
-      data4plotting <- subset(expression.data, chrom == input$chromosome & trait == input$traits)
+      data4plotting <- subset(qtl, chr == input$chromosome & trait == input$traits)
     }
     
     # plots either the genetic distance or physical distance
@@ -180,16 +181,16 @@ shinyServer(function(input, output) {
   download_data <- reactive({
     if (input$chromosome == 0){
       if (input$traits == 4){
-        data <- subset(expression.data, trait == 1 | trait == 2)
+        data <- subset(qtl, trait == "trait1" | trait == "trait2")
       } else{
-        data <- subset(expression.data, trait == input$traits)
+        data <- subset(qtl, trait == input$traits)
       }
     } else{
-      data_in_region <- subset(expression.data, genetic.position >= input$region[1] & genetic.position <= input$region[2])
+      data_in_region <- subset(qtl, genetic.position >= input$region[1] & genetic.position <= input$region[2])
       if (input$traits == 4){
-        data <- subset(data_in_region, chrom == input$chromosome & (trait == 1 | trait == 2))
+        data <- subset(data_in_region, chr == input$chromosome & (trait == "trait1" | trait == "trait2"))
       } else{
-        data <- subset(data_in_region, chrom == input$chromosome & trait == input$traits)
+        data <- subset(data_in_region, chr == input$chromosome & trait == input$traits)
       }
     }
   })
@@ -206,19 +207,19 @@ shinyServer(function(input, output) {
   # or just gene name, position, and expression?
   # only shows top 10 upregulated and top 10 downregulated genes
   table_data <- reactive({
-    selected.data <- subset(expression.data, select = c(gene.name, allele, expression.value, genetic.position, physical.position, trait, chrom))
+    selected.data <- subset(qtl, select = c(gene_name, allele, expression.value, genetic.position, physical.position, trait, chr))
     if (input$chromosome == 0){
       if (input$traits == 4){
-        data <- subset(selected.data, trait == 1 | trait == 2)
+        data <- subset(selected.data, trait == "trait1" | trait == "trait2")
       } else{
         data <- subset(selected.data, trait == input$traits)
       }
     } else{
       data_in_region <- subset(selected.data, genetic.position >= input$region[1] & genetic.position <= input$region[2])
       if (input$traits == 4){
-        data <- subset(data_in_region, chrom == input$chromosome & (trait == 1 | trait == 2))
+        data <- subset(data_in_region, chr == input$chromosome & (trait == "trait1" | trait == "trait2"))
       } else{
-        data <- subset(data_in_region, chrom == input$chromosome & trait == input$traits)
+        data <- subset(data_in_region, chr == input$chromosome & trait == input$traits)
       }
     }
     sorted_data <- data[order(data$expression.value),]
@@ -231,8 +232,8 @@ shinyServer(function(input, output) {
   })
   
   # shows the data previously retreived in a table
-  output$table <- renderTable({
-    table_data()
-    }, include.rownames = FALSE)
+#   output$table <- renderTable({
+#     table_data()
+#     }, include.rownames = FALSE)
     
 })

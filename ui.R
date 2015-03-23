@@ -2,17 +2,27 @@
 
 library(shiny)
 
+# creates the data used for the trait select input
+phenotype_data <- read.csv("data/simulated_phenotypes_real_map.csv")
+num_traits <- length(grep("trait", names(phenotype_data)))
+trait_names <- list()
+for (i in 1:num_traits){
+  trait_names[i] = i
+}
+for (i in 1:length(trait_positions)){
+  names(trait_names)[i] = paste("Trait", i, sep = " ")
+}
+
+  
 shinyUI(fluidPage(
   titlePanel("QTL Visualization"),
   
   sidebarLayout(
-    sidebarPanel(
-      selectInput("traits", label = h5("Plot which trait?"), 
-                  choices = list("Trait 1" = "trait1",
-                                 "Trait 2" = "trait2",
-                                 "Trait 3" = "trait3",
-                                 "Traits 1 and 2" = 4),
-                  selected = 1),
+    sidebarPanel(     
+      selectizeInput("traits", label = h5("Plot which trait?"),
+                      multiple = FALSE, selected = "1",
+                      choices = trait_names, 
+      ),
       br(),
       selectInput("chromosome", label = h5("Plot which chromosome(s)?"), 
                   choices = list("All" = 0,
@@ -30,12 +40,16 @@ shinyUI(fluidPage(
       br(),
       selectInput("ex_graph", label = h5("Plot t-statistic or fold change"), 
                   choices = list("t-statistic" = 1,
-                                 "Fold Change" = 2),
+                                 "fold change" = 2),
                   selected = 1),
       br(),
       conditionalPanel(condition = "input.chromosome != 0", uiOutput("slider")),
       br(),
-      downloadButton('download_table', 'Download Full Gene Table')
+      downloadButton('download_table', 'Download Full Gene Table'),
+      br(),
+      br(),
+      br(),
+      "enter text"
     ),
     
     mainPanel(

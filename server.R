@@ -135,8 +135,8 @@ shinyServer(function(input, output, session) {
     if (input$chromosome == 0){
         data <- expression_data
     } else{
-#       data_in_region <- subset(expression_data, genetic.position >= input$region[1] & genetic.position <= input$region[2])
-        data <- subset(expression_data, chr == input$chromosome)
+      data_in_region <- subset(expression_data, tx_start >= input$region[1] & tx_start <= input$region[2])
+        data <- subset(expression_data, tx_chrom == input$chromosome)
     }
   })
   

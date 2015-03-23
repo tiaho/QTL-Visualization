@@ -9,7 +9,7 @@ trait_names <- list()
 for (i in 1:num_traits){
   trait_names[i] = i
 }
-for (i in 1:length(trait_positions)){
+for (i in 1:num_traits){
   names(trait_names)[i] = paste("Trait", i, sep = " ")
 }
 

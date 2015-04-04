@@ -68,7 +68,8 @@ shinyServer(function(input, output, session) {
       trait_num2 = input$traits[2]
       trait_pos2 <- grep(trait_num2, names(phenotype_data))
       lod2 <- phenotype_data[, trait_pos2]
-      
+     
+    # dataframe that contains lod2 too
       qtlData <- cbind(qtlData, lod2)
     }
     
@@ -80,7 +81,13 @@ shinyServer(function(input, output, session) {
     }     
     
     # extracts the max lod value for the data set
-    peak <- max(qtlData$lod)
+    if (length(input$traits) > 1){
+      peak1 <- max(qtlData$lod)
+      peak2 <- max(qtlData$lod2)
+      peak <- max(peak1, peak2)
+    } else{
+      peak <- max(qtlData$lod)
+    }
     
     # start of the plot
     qtl_plot <- ggplot(qtlData)

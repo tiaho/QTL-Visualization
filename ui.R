@@ -15,12 +15,12 @@ for (i in 1:num_traits){
 
   
 shinyUI(fluidPage(
-  titlePanel("QTL Visualization"),
+  titlePanel("QTLVizR"),
   
   sidebarLayout(
     sidebarPanel(     
       selectizeInput("traits", label = h5("Plot which trait?"),
-                      multiple = FALSE, selected = "1",
+                      multiple = TRUE, selected = "1",
                       choices = trait_names, 
       ),
       br(),
@@ -49,7 +49,7 @@ shinyUI(fluidPage(
       br(),
       br(),
       br(),
-      "enter text"
+      "note: can only plot up to 2 traits at a time for now"
     ),
     
     mainPanel(

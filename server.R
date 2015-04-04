@@ -10,7 +10,7 @@ eqtl_data <- read.csv("data/transcripts_eqtl_start_stop_eqtl.csv")
 phenotype_data <- read.csv("data/simulated_phenotypes_real_map.csv")
 
 # calculates the fold change for the 2 parent alleles
-allele_data$fold_change <- abs(allele_data$IMB211 - allele_data$R500)
+allele_data$fold_change <- allele_data$IMB211 - allele_data$R500
 
 # extracts the physical location from the phenotypic data
 phenotype_data$phy_pos <- sapply(phenotype_data$marker, function (x){strsplit(as.character(x), "x")[[1]][2] })
@@ -24,6 +24,9 @@ phenotype_data$chr <- as.numeric(phenotype_data$chr)
 phenotype_data$background.color <- "1"
 phenotype_data$background.color[(phenotype_data$chr %% 2) == 0] <- "0"
 
+# converts the physical position from bases to megabases
+phenotype_data$phy_pos <- round(phenotype_data$phy_pos / 1000000, digits = 3)
+
 # merges some data frames together to get the desired data frame for plotting the expression graph
 expression_data <- merge(x = allele_data, y = eqtl_data, by.x = "gene_name", by.y = "tx_name")
 
@@ -31,15 +34,19 @@ expression_data <- merge(x = allele_data, y = eqtl_data, by.x = "gene_name", by.
 expression_data$tx_chrom <- sapply(as.character(expression_data$tx_chrom), function(x){ strsplit(x, "A")[[1]][2] })
 expression_data$tx_chrom <- as.numeric(expression_data$tx_chrom)
 
+# converts the physical position from bases to megabases
+expression_data$tx_start <- round(expression_data$tx_start / 1000000, digits = 3)
+expression_data$tx_end <- round(expression_data$tx_end / 1000000, digits = 3)
+
 
 shinyServer(function(input, output, session) {
   
   # slider input
   output$slider <- renderUI({
     qtlChr <- subset(phenotype_data, chr == input$chromosome)
-    max_phy_pos <- ceiling(max(qtlChr$phy_pos, 1))
+    max_phy_pos <- max(qtlChr$phy_pos, 1)
     sliderInput("region", label = h5("Display a region of the chromosome?"),
-     min = 0, max = max_phy_pos, value = c(0, max_phy_pos), step = 1)
+     min = 0, max = max_phy_pos, value = c(0, max_phy_pos), step = 0.001)
   })
   
   
@@ -47,13 +54,23 @@ shinyServer(function(input, output, session) {
   output$qtl_graph <- renderPlot({
     
     # determines the trait that is inputted
-    trait_num = input$traits
+    trait_num = input$traits[1]
     trait_pos <- grep(trait_num, names(phenotype_data))
     lod <- phenotype_data[, trait_pos]
     
     # extracts the needed info from phenotype_data
     qtlData <- subset(phenotype_data, select = c(chr, pos, phy_pos, background.color))
     qtlData <- cbind(qtlData, lod)
+    
+    # if there's a second trait selected...
+    if (length(input$traits) > 1){
+      # determines the trait that is inputted
+      trait_num2 = input$traits[2]
+      trait_pos2 <- grep(trait_num2, names(phenotype_data))
+      lod2 <- phenotype_data[, trait_pos2]
+      
+      qtlData <- cbind(qtlData, lod2)
+    }
     
     # subsets the data depending on chromosome selected
     if (input$chromosome == 0){
@@ -92,42 +109,43 @@ shinyServer(function(input, output, session) {
             axis.line=element_line(),
             panel.margin = unit(0, "cm")) +
       ggtitle("LOD Curves for QTLs") +
-      xlab("Position in cM") +
+      xlab("Position in Megabases") +
       ylab("LOD Score") +
       theme(axis.text = element_text(size=12), axis.title = element_text(size=16), title = element_text(size=16))
     
-    if (input$traits == 4){
-      qtl_plot +
-        geom_line(aes(x = phy_pos, y = lod2), size = 2, color = "blue")
-    } else {
-      qtl_plot
+    if (length(input$traits) > 1){
+      qtl_plot <- qtl_plot +
+                    geom_line(aes(x = phy_pos, y = lod2), color= "blue", size = 2)
     }
+    
+    # plots the graph
+    qtl_plot
+    
   })
   
   # expression graph
   output$expression_graph <- renderPlot({
     # subsets the data depending on chromosome selected
-    data4plotting <- subset(expression_data, tx_chrom == input$chromosome, select = c("tx_start", "t_stat", "fold_change"))
-
+    data4plotting <- subset(expression_data, tx_chrom == input$chromosome & tx_start >= input$region[1] & tx_start <= input$region[2],
+                            select = c("tx_start", "t_stat", "fold_change"))
+#     data4plotting <- subset(data4plotting, tx_start >= input$region[1] & tx_start <= input$region[2])
     
-    # plots physical distance
-      data4plotting <- subset(data4plotting, tx_start >= input$region[1] & tx_start <= input$region[2])
     if (input$ex_graph == 1){ # t-statistic
       expression_plot <- ggplot(data4plotting) +
                           geom_point(aes(tx_start, t_stat, color = fold_change)) +
-                          scale_color_continuous(name = "log2(fold change)") +
-                          xlab("Physical Position in Base Pairs") +
-                          ylab("t-statistic") +
-                          theme(axis.text = element_text(size=12), axis.title = element_text(size=16), title = element_text(size=16))
+                          scale_colour_gradientn(colours = c("red", "black", "blue"), name = "log2(fold change)") +
+                          ylab("t-statistic")
     } else { # fold change
       expression_plot <- ggplot(data4plotting) +
                           geom_point(aes(tx_start, fold_change, color = t_stat)) +
-                          scale_color_continuous(name = "t-stat") +
-                          xlab("Physical Position in Base Pairs") +
-                          ylab("log2(fold change)") +
-                          theme(axis.text = element_text(size=12), axis.title = element_text(size=16), title = element_text(size=16))
+                          scale_colour_gradientn(colours = c("red", "black", "blue"), name = "t-statistic") +
+                          ylab("log2(fold change)")
+                          
+                          
     }
-      expression_plot
+    expression_plot +
+      xlab("Physical Position in Base Pairs") +
+      theme(axis.text = element_text(size=12), axis.title = element_text(size=16), title = element_text(size=16))
   })
   
   # generates the dataset for users to download - complete list of genes in the region that they are viewing

@@ -19,7 +19,7 @@ shinyUI(fluidPage(
   
   sidebarLayout(
     sidebarPanel(     
-      selectizeInput("traits", label = h5("Plot which trait?"),
+      selectizeInput("traits", label = h5("Choose up to 3 traits"),
                       multiple = TRUE, selected = "1",
                       choices = trait_names, 
       ),
@@ -49,7 +49,12 @@ shinyUI(fluidPage(
       br(),
       br(),
       br(),
-      "note: can only plot up to 2 traits at a time for now"
+      "QTLvisR is a web application to help visualize quantitative trait loci (QTL).
+      This app allows the user to select physiological and developmental traits from a drop down menu.
+      The app displays the support for a physiological or developmental (pQTL) for every genotyped marker across the organism's genome.
+      The user can sub-select specific chromosomes, or intervals along a chromosome to focus attention on.
+      At the same time, QTL's for gene expression (eQTL) for genes falling within the user defined genomic interval are also visualized.
+      This allows the user to quickly examine a genomic region for co-occurrence of pQTL and eQTL."
     ),
     
     mainPanel(

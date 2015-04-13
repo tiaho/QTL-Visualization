@@ -3,6 +3,7 @@
 library(ggplot2)
 library(reshape2)
 library(grid)
+library(scales)
 
 # reads in data
 allele_data <- read.csv("data/allele_specific_test_p_adjusted.csv")
@@ -57,20 +58,40 @@ shinyServer(function(input, output, session) {
     trait_num = input$traits[1]
     trait_pos <- grep(trait_num, names(phenotype_data))
     lod <- phenotype_data[, trait_pos]
+    trait <- rep(trait_num, length(lod))
     
     # extracts the needed info from phenotype_data
     qtlData <- subset(phenotype_data, select = c(chr, pos, phy_pos, background.color))
-    qtlData <- cbind(qtlData, lod)
+    qtlData <- cbind(qtlData, lod, trait)
     
     # if there's a second trait selected...
     if (length(input$traits) > 1){
       # determines the trait that is inputted
       trait_num2 = input$traits[2]
       trait_pos2 <- grep(trait_num2, names(phenotype_data))
-      lod2 <- phenotype_data[, trait_pos2]
-     
-    # dataframe that contains lod2 too
-      qtlData <- cbind(qtlData, lod2)
+      lod <- phenotype_data[, trait_pos2]
+      trait <- rep(trait_num2, length(lod))
+
+      # extracts the needed info from phenotype_data
+      qtlData2 <- subset(phenotype_data, select = c(chr, pos, phy_pos, background.color))
+      qtlData2 <- cbind(qtlData2, lod, trait)
+
+      qtlData <- rbind(qtlData, qtlData2)
+    }
+    
+    # if there's a third trait selected...
+    if (length(input$traits) > 2){
+      # determines the trait that is inputted
+      trait_num3 = input$traits[3]
+      trait_pos3 <- grep(trait_num3, names(phenotype_data))
+      lod <- phenotype_data[, trait_pos3]
+      trait <- rep(trait_num3, length(lod))
+      
+      # extracts the needed info from phenotype_data
+      qtlData3 <- subset(phenotype_data, select = c(chr, pos, phy_pos, background.color))
+      qtlData3 <- cbind(qtlData3, lod, trait)
+      
+      qtlData <- rbind(qtlData, qtlData3)
     }
     
     # subsets the data depending on chromosome selected
@@ -81,13 +102,7 @@ shinyServer(function(input, output, session) {
     }     
     
     # extracts the max lod value for the data set
-    if (length(input$traits) > 1){
-      peak1 <- max(qtlData$lod)
-      peak2 <- max(qtlData$lod2)
-      peak <- max(peak1, peak2)
-    } else{
       peak <- max(qtlData$lod)
-    }
     
     # start of the plot
     qtl_plot <- ggplot(qtlData)
@@ -107,22 +122,28 @@ shinyServer(function(input, output, session) {
     qtl_plot <- qtl_plot +
       facet_grid(~ chr, scales = "free_x", space = "free_x") +
       geom_rect(aes(fill = background.color), xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf) +
-      geom_line(aes(x = phy_pos, y = lod), size = 2) +
+      geom_line(aes(x = phy_pos, y = lod, color = as.factor(trait)), size = 2) +
       geom_hline(yintercept = 4, color = "red", size = 1) +
       geom_segment(aes(x = phy_pos, xend = phy_pos), y = (peak * -0.02), yend = (peak * -0.05)) +
       scale_y_continuous(expand = c(0, 0), limits = c((peak * -0.06), max (5, peak))) +
-      theme(legend.position = "none",
-            axis.text.x = element_text(angle = 90),
+      theme(axis.text.x = element_text(angle = 90),
             axis.line=element_line(),
+#             legend.position = "none",
             panel.margin = unit(0, "cm")) +
       ggtitle("LOD Curves for QTLs") +
       xlab("Position in Megabases") +
       ylab("LOD Score") +
       theme(axis.text = element_text(size=12), axis.title = element_text(size=16), title = element_text(size=16))
     
-    if (length(input$traits) > 1){
+    if (length(input$traits) == 1){
       qtl_plot <- qtl_plot +
-                    geom_line(aes(x = phy_pos, y = lod2), color= "blue", size = 2)
+                    scale_colour_manual(name = "Trait", values = "black")
+    } else if (length(input$traits) == 2){
+      qtl_plot <- qtl_plot +
+                    scale_colour_manual(name = "Trait", values =c("black", "blue"))
+    } else if (length(input$traits) == 3){
+      qtl_plot <- qtl_plot +
+                    scale_colour_manual(name = "Trait", values =c("black","blue", "green"))
     }
     
     # plots the graph
@@ -136,22 +157,26 @@ shinyServer(function(input, output, session) {
     data4plotting <- subset(expression_data, tx_chrom == input$chromosome & tx_start >= input$region[1] & tx_start <= input$region[2],
                             select = c("tx_start", "t_stat", "fold_change"))
 #     data4plotting <- subset(data4plotting, tx_start >= input$region[1] & tx_start <= input$region[2])
-    
+#     min_tstat = min(data4plotting$t_stat)
+#     max_tstat = max(data4plotting$t_stat)
+# 
+#     data4plotting <- rescale(data4plotting, to = c(min_tstat * 10, max_tstat * 10))
+
     if (input$ex_graph == 1){ # t-statistic
       expression_plot <- ggplot(data4plotting) +
                           geom_point(aes(tx_start, t_stat, color = fold_change)) +
-                          scale_colour_gradientn(colours = c("red", "black", "blue"), name = "log2(fold change)") +
+                          scale_colour_gradientn(colours = c("red", "red1", "red2", "red3", "black", "blue3", "blue2", "blue1", "blue"), name = "log2(fold change)") +
                           ylab("t-statistic")
     } else { # fold change
       expression_plot <- ggplot(data4plotting) +
                           geom_point(aes(tx_start, fold_change, color = t_stat)) +
-                          scale_colour_gradientn(colours = c("red", "black", "blue"), name = "t-statistic") +
+                          scale_colour_gradientn(colours = c("red", "red1", "red2", "red3", "red4", "black", "blue4", "blue3", "blue2", "blue1", "blue"), name = "t-statistic") +
                           ylab("log2(fold change)")
                           
                           
     }
     expression_plot +
-      xlab("Physical Position in Base Pairs") +
+      xlab("Position in Megabases") +
       theme(axis.text = element_text(size=12), axis.title = element_text(size=16), title = element_text(size=16))
   })
   

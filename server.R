@@ -145,7 +145,9 @@ shinyServer(function(input, output, session) {
       qtl_plot <- qtl_plot +
                     scale_colour_manual(name = "Trait", values =c("black","blue", "green"))
     }
-    
+
+    qtl_plot <- qtl_plot + guides(fill=FALSE)
+
     # plots the graph
     qtl_plot
     
@@ -156,6 +158,9 @@ shinyServer(function(input, output, session) {
     # subsets the data depending on chromosome selected
     data4plotting <- subset(expression_data, tx_chrom == input$chromosome & tx_start >= input$region[1] & tx_start <= input$region[2],
                             select = c("tx_start", "t_stat", "fold_change"))
+    t_limits <- c(-max(abs(data4plotting$t_stat),na.rm=T),max(abs(data4plotting$t_stat),na.rm=T))
+    fc_limits <- c(-max(abs(data4plotting$fold_change),na.rm=T),max(abs(data4plotting$fold_change),na.rm=T))
+    
 #     data4plotting <- subset(data4plotting, tx_start >= input$region[1] & tx_start <= input$region[2])
 #     min_tstat = min(data4plotting$t_stat)
 #     max_tstat = max(data4plotting$t_stat)
@@ -165,12 +170,12 @@ shinyServer(function(input, output, session) {
     if (input$ex_graph == 1){ # t-statistic
       expression_plot <- ggplot(data4plotting) +
                           geom_point(aes(tx_start, t_stat, color = fold_change)) +
-                          scale_colour_gradientn(colours = c("red", "red1", "red2", "red3", "black", "blue3", "blue2", "blue1", "blue"), name = "log2(fold change)") +
+                          scale_colour_gradientn(colours = c("red", "red1", "red2", "red3", "black", "blue3", "blue2", "blue1", "blue"), name = "log2(fold change)", limits=fc_limits) +
                           ylab("t-statistic")
     } else { # fold change
       expression_plot <- ggplot(data4plotting) +
                           geom_point(aes(tx_start, fold_change, color = t_stat)) +
-                          scale_colour_gradientn(colours = c("red", "red1", "red2", "red3", "red4", "black", "blue4", "blue3", "blue2", "blue1", "blue"), name = "t-statistic") +
+                          scale_colour_gradientn(colours = c("red", "red1", "red2", "red3", "red4", "black", "blue4", "blue3", "blue2", "blue1", "blue"), name = "t-statistic",limits=t_limits) +
                           ylab("log2(fold change)")
                           
                           

@@ -49,7 +49,7 @@ shinyUI(fluidPage(
       br(),
       br(),
       br(),
-      "QTLvisR is a web application to help visualize quantitative trait loci (QTL).
+      "QTLvizR is a web application to help visualize quantitative trait loci (QTL).
       This app allows the user to select physiological and developmental traits from a drop down menu.
       The app displays the support for a physiological or developmental (pQTL) for every genotyped marker across the organism's genome.
       The user can sub-select specific chromosomes, or intervals along a chromosome to focus attention on.

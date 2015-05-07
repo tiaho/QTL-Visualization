@@ -11,7 +11,7 @@ eqtl_data <- read.csv("data/transcripts_eqtl_start_stop_eqtl.csv")
 phenotype_data <- read.csv("data/real_traits.csv")
 
 # calculates the fold change for the 2 parent alleles
-allele_data$fold_change <- allele_data$IMB211 - allele_data$R500
+allele_data$fold_change <- allele_data$R500 - allele_data$IMB211
 
 # extracts the physical location from the phenotypic data
 phenotype_data$phy_pos <- sapply(phenotype_data$marker, function (x){strsplit(as.character(x), "x")[[1]][2] })

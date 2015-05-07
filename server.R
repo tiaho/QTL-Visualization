@@ -8,7 +8,7 @@ library(scales)
 # reads in data
 allele_data <- read.csv("data/allele_specific_test_p_adjusted.csv")
 eqtl_data <- read.csv("data/transcripts_eqtl_start_stop_eqtl.csv")
-phenotype_data <- read.csv("data/simulated_phenotypes_real_map.csv")
+phenotype_data <- read.csv("data/real_traits.csv")
 
 # calculates the fold change for the 2 parent alleles
 allele_data$fold_change <- allele_data$IMB211 - allele_data$R500
@@ -56,9 +56,10 @@ shinyServer(function(input, output, session) {
     
     # determines the trait that is inputted
     trait_num = input$traits[1]
-    trait_pos <- grep(trait_num, names(phenotype_data))
+#     trait_pos <- grep(trait_num, names(phenotype_data))
+    trait_pos <- as.numeric(trait_num) + 3
     lod <- phenotype_data[, trait_pos]
-    trait <- rep(trait_num, length(lod))
+    trait <- rep(names(phenotype_data)[trait_pos], length(lod))
     
     # extracts the needed info from phenotype_data
     qtlData <- subset(phenotype_data, select = c(chr, pos, phy_pos, background.color))
@@ -123,7 +124,7 @@ shinyServer(function(input, output, session) {
       facet_grid(~ chr, scales = "free_x", space = "free_x") +
       geom_rect(aes(fill = background.color), xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf) +
       geom_line(aes(x = phy_pos, y = lod, color = as.factor(trait)), size = 2) +
-      geom_hline(yintercept = 4, color = "red", size = 1) +
+      geom_hline(yintercept = 3, color = "red", size = 1) +
       geom_segment(aes(x = phy_pos, xend = phy_pos), y = (peak * -0.02), yend = (peak * -0.05)) +
       scale_y_continuous(expand = c(0, 0), limits = c((peak * -0.06), max (5, peak))) +
       theme(axis.text.x = element_text(angle = 90),

@@ -3,26 +3,30 @@
 library(shiny)
 
 # creates the data used for the trait select input
-phenotype_data <- read.csv("data/simulated_phenotypes_real_map.csv")
-num_traits <- length(grep("trait", names(phenotype_data)))
+phenotype_data <- read.csv("data/real_traits.csv")
+num_traits <- length(names(phenotype_data)) - 3
 trait_names <- list()
 for (i in 1:num_traits){
   trait_names[i] = i
 }
-for (i in 1:num_traits){
-  names(trait_names)[i] = paste("Trait", i, sep = " ")
-}
-
+names(trait_names) <- names(phenotype_data)[4:length(names(phenotype_data))]
   
 shinyUI(fluidPage(
   titlePanel("QTLVizR"),
   
   sidebarLayout(
     sidebarPanel(     
-      selectizeInput("traits", label = h5("Choose up to 3 traits"),
-                      multiple = TRUE, selected = "1",
-                      choices = trait_names, 
-      ),
+#       selectizeInput("traits", label = h5("Choose up to 3 traits"),
+#                       multiple = TRUE, selected = 1,
+#                       choices = trait_names, 
+#       ),
+      selectInput("traits", label = h5("Plot which trait?"), 
+                                    choices = list("biomass" = 1,
+                                                    "height" = 2,
+                                                    "leaf length" = 3,
+                                                    "period" = 4,
+                                                    "leaf area" = 5),
+                                    selected = 1),
       br(),
       selectInput("chromosome", label = h5("Plot which chromosome(s)?"), 
                   choices = list("All" = 0,

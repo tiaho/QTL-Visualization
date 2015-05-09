@@ -134,7 +134,7 @@ shinyServer(function(input, output, session) {
       ggtitle("LOD Curves for QTLs") +
       xlab("Position in Megabases") +
       ylab("LOD Score") +
-      theme(axis.text = element_text(size=12), axis.title = element_text(size=16), title = element_text(size=16))
+      theme(axis.text = element_text(size=12), axis.title = element_text(size=16), title = element_text(size=16), legend.position = "top")
     
     if (length(input$traits) == 1){
       qtl_plot <- qtl_plot +
@@ -183,7 +183,7 @@ shinyServer(function(input, output, session) {
     }
     expression_plot +
       xlab("Position in Megabases") +
-      theme(axis.text = element_text(size=12), axis.title = element_text(size=16), title = element_text(size=16))
+      theme(axis.text = element_text(size=12), axis.title = element_text(size=16), title = element_text(size=16), legend.position = "top")
   })
   
   # generates the dataset for users to download - complete list of genes in the region that they are viewing

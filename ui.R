@@ -49,7 +49,7 @@ shinyUI(fluidPage(
       br(),
       conditionalPanel(condition = "input.chromosome != 0", uiOutput("slider")),
       br(),
-      downloadButton('download_table', 'Download Full Gene Table'),
+      downloadButton('download_table', 'Download Table for Genes in View'),
       br(),
       br(),
       br(),
@@ -68,6 +68,7 @@ shinyUI(fluidPage(
       conditionalPanel(condition = "input.chromosome != 0", plotOutput("expression_graph")),
       br(),
       br(),
+      "Top 20 Differentially Expressed Genes",
       tableOutput("table")
     )
   )

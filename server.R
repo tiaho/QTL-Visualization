@@ -127,14 +127,18 @@ shinyServer(function(input, output, session) {
       geom_hline(yintercept = 3, color = "red", size = 1) +
       geom_segment(aes(x = phy_pos, xend = phy_pos), y = (peak * -0.02), yend = (peak * -0.05)) +
       scale_y_continuous(expand = c(0, 0), limits = c((peak * -0.06), max (5, peak))) +
-      theme(axis.text.x = element_text(angle = 90),
-            axis.line=element_line(),
-#             legend.position = "none",
-            panel.margin = unit(0, "cm")) +
       ggtitle("LOD Curves for QTLs") +
       xlab("Position in Megabases") +
       ylab("LOD Score") +
-      theme(axis.text = element_text(size=12), axis.title = element_text(size=16), title = element_text(size=16), legend.position = "top")
+      theme(axis.text = element_text(size=12),
+            axis.text.x = element_text(angle = 90),
+            axis.title = element_text(size=16),
+            axis.title.y = element_text(vjust = 2),
+            axis.line=element_line(),
+            title = element_text(size=16),
+            legend.position = "top",
+            plot.margin = unit(c(0, 0, 0, 0.55), "cm"),
+            panel.margin = unit(0, "cm"))
     
     if (length(input$traits) == 1){
       qtl_plot <- qtl_plot +
@@ -161,12 +165,6 @@ shinyServer(function(input, output, session) {
                             select = c("tx_start", "t_stat", "fold_change"))
     t_limits <- c(-max(abs(data4plotting$t_stat),na.rm=T),max(abs(data4plotting$t_stat),na.rm=T))
     fc_limits <- c(-max(abs(data4plotting$fold_change),na.rm=T),max(abs(data4plotting$fold_change),na.rm=T))
-    
-#     data4plotting <- subset(data4plotting, tx_start >= input$region[1] & tx_start <= input$region[2])
-#     min_tstat = min(data4plotting$t_stat)
-#     max_tstat = max(data4plotting$t_stat)
-# 
-#     data4plotting <- rescale(data4plotting, to = c(min_tstat * 10, max_tstat * 10))
 
     if (input$ex_graph == 1){ # t-statistic
       expression_plot <- ggplot(data4plotting) +
@@ -183,7 +181,10 @@ shinyServer(function(input, output, session) {
     }
     expression_plot +
       xlab("Position in Megabases") +
-      theme(axis.text = element_text(size=12), axis.title = element_text(size=16), title = element_text(size=16), legend.position = "top")
+      theme(axis.text = element_text(size=12),
+            axis.title = element_text(size=16),
+            title = element_text(size=16),
+            legend.position = "top")
   })
   
   # generates the dataset for users to download - complete list of genes in the region that they are viewing
@@ -198,7 +199,13 @@ shinyServer(function(input, output, session) {
   
   # allows user to download the full gene table
   output$download_table <- downloadHandler(
-    filename = function() { paste("chr", input$chromosome, ".csv", sep="") },
+    filename = function() {
+      if (input$chromosome == 0){
+        c("all_chr.csv")
+      } else {
+        paste("chr", input$chromosome, "_pos", input$region[1], ":", input$region[2], ".csv", sep="")
+      }
+    },
     content = function(file) {
       write.csv(download_data(), file)
     }
